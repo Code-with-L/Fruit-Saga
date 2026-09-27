@@ -7,8 +7,11 @@ extends Node
 ## affordable on ARM64 mobile. The painting code below is plain vector art:
 ## shaded spheres, quadratic beziers, ellipses and clipped polylines.
 
-## Transparent margin baked around each fruit, room for outlines and glows.
-const PAD := 10.0
+## Stems, leaves and crowns reach this multiple of the body radius, so the
+## baked texture has to be far larger than the fruit itself or they clip.
+## The body is still painted at exactly `radius`, which is what the physics
+## circle uses, so the silhouette and the collision shape stay in agreement.
+const ART_EXTENT := 1.55
 ## Bake at 2x and let the GPU downscale, so fruit stay crisp on high-DPI screens.
 const BAKE_SCALE := 2.0
 
@@ -86,7 +89,7 @@ func _bake_all() -> void:
 	_textures.clear()
 	_half_sizes.clear()
 	for tier in FruitDatabase.tiers:
-		var half: float = tier.radius + PAD
+		var half: float = tier.radius * ART_EXTENT + 6.0
 		var tex := await _bake(tier.tier_id, half)
 		_textures.append(tex)
 		_half_sizes.append(half)
@@ -104,7 +107,11 @@ func _bake(tier_id: int, half: float) -> Texture2D:
 
 	var painter := FruitPainter.new()
 	painter.tier_id = tier_id
-	painter.radius = FruitDatabase.get_tier(tier_id).radius
+	# The viewport is 2*half*BAKE_SCALE pixels but 1 unit is still 1 pixel, so
+	# the fruit has to be *drawn* at BAKE_SCALE or the extra pixels stay
+	# empty and the body gets squashed to half size when the texture is drawn
+	# back down to 2*half world units.
+	painter.radius = FruitDatabase.get_tier(tier_id).radius * BAKE_SCALE
 	painter.position = Vector2(side, side) * 0.5
 	vp.add_child(painter)
 	add_child(vp)
@@ -139,9 +146,9 @@ static func paint(ci: CanvasItem, tier_id: int, r: float) -> void:
 
 # Cherry: two joined spheres on curved stems with a leaf.
 static func _paint_cherry(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[0]
+	var p: Dictionary = PALETTE[0]
 	var join := Vector2(0.05 * r, -1.02 * r)
-	var always := func(_pt: Vector2) -> bool: return true
+	var always: Callable = func(_pt: Vector2) -> bool: return true
 	_polyline_inside(ci, _bezier(Vector2(-0.42 * r, -0.42 * r), Vector2(-0.34 * r, -0.85 * r), join, 12), always, p["stem"], maxf(1.5, r * 0.09))
 	_polyline_inside(ci, _bezier(Vector2(0.46 * r, -0.30 * r), Vector2(0.32 * r, -0.80 * r), join, 12), always, p["stem"], maxf(1.5, r * 0.09))
 	_leaf(ci, join + Vector2(0.02 * r, 0.06 * r), -0.45, 0.72 * r, 0.17 * r, p["leaf"], p["stem"])
@@ -151,7 +158,7 @@ static func _paint_cherry(ci: CanvasItem, r: float) -> void:
 
 # Strawberry: bezier heart-cone, seeded, leafy crown.
 static func _paint_strawberry(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[1]
+	var p: Dictionary = PALETTE[1]
 	var body := PackedVector2Array()
 	body.append_array(_bezier(Vector2(0.0, -0.90 * r), Vector2(0.58 * r, -1.02 * r), Vector2(0.98 * r, -0.30 * r), 14))
 	body.append_array(_bezier(Vector2(0.98 * r, -0.30 * r), Vector2(0.84 * r, 0.60 * r), Vector2(0.0, 1.06 * r), 14))
@@ -171,7 +178,7 @@ static func _paint_strawberry(ci: CanvasItem, r: float) -> void:
 
 # Grape: a cluster of small shaded berries.
 static func _paint_grape(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[2]
+	var p: Dictionary = PALETTE[2]
 	var berry := 0.34 * r
 	var spots := PackedVector2Array([
 		Vector2(0.0, -0.52),
@@ -189,7 +196,7 @@ static func _paint_grape(ci: CanvasItem, r: float) -> void:
 
 # Orange: peeled sphere with dimpled rind, stem and leaf.
 static func _paint_orange(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[3]
+	var p: Dictionary = PALETTE[3]
 	_sphere(ci, Vector2.ZERO, r, p["base"], p["light"], p["dark"])
 	for i in 26:
 		var a := float(i) * 2.399963
@@ -201,19 +208,19 @@ static func _paint_orange(ci: CanvasItem, r: float) -> void:
 
 # Apple: shouldered sphere with a top dimple.
 static func _paint_apple(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[4]
+	var p: Dictionary = PALETTE[4]
 	ci.draw_colored_polygon(_scaled(_apple_outline(r), 1.0), p["base"])
 	ci.draw_colored_polygon(_scaled(_apple_outline(r), 0.76), Color(p["light"], 0.42))
 	ci.draw_polyline(_apple_outline(r) + PackedVector2Array([_apple_outline(r)[0]]), p["dark"], max(1.2, r * 0.06), true)
 	ci.draw_circle(Vector2(0.0, -0.80 * r), 0.20 * r, Color(p["dark"], 0.55))
 	ci.draw_line(Vector2(0.0, -0.86 * r), Vector2(0.10 * r, -1.30 * r), p["stem"], max(1.5, r * 0.10), true)
 	_leaf(ci, Vector2(0.08 * r, -1.16 * r), -0.35, 0.70 * r, 0.18 * r, p["leaf"], p["stem"])
-	ci.draw_colored_polygon(_scaled(_leaf_points(Vector2(-0.42 * r, -0.30 * r), -0.7, 0.40 * r, 0.11 * r), 1.0), Color(1, 1, 1, 0.40))
+	ci.draw_circle(Vector2(-0.36 * r, -0.30 * r), 0.17 * r, Color(1, 1, 1, 0.45))
 
 
 # Pear: big bottom lobe, narrow neck, top lobe.
 static func _paint_pear(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[5]
+	var p: Dictionary = PALETTE[5]
 	ci.draw_colored_polygon(_pear_outline(r), p["base"])
 	ci.draw_colored_polygon(_scaled(_pear_outline(r), 0.78), Color(p["light"], 0.40))
 	ci.draw_polyline(_pear_outline(r) + PackedVector2Array([_pear_outline(r)[0]]), p["dark"], max(1.2, r * 0.06), true)
@@ -223,7 +230,7 @@ static func _paint_pear(ci: CanvasItem, r: float) -> void:
 
 # Peach: sphere with a vertical cleft, fuzz and a leaf.
 static func _paint_peach(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[6]
+	var p: Dictionary = PALETTE[6]
 	_sphere(ci, Vector2.ZERO, r, p["base"], p["light"], p["dark"])
 	_polyline_inside(ci, _bezier(Vector2(-0.10 * r, -0.98 * r), Vector2(0.16 * r, 0.0), Vector2(-0.10 * r, 0.98 * r), 16), _inside_circle(r * 0.99), Color(p["accent"], 0.8), max(1.2, r * 0.07))
 	_polyline_inside(ci, _bezier(Vector2(0.34 * r, -0.88 * r), Vector2(0.46 * r, 0.0), Vector2(0.34 * r, 0.88 * r), 16), _inside_circle(r * 0.99), Color(p["accent"], 0.45), max(1.0, r * 0.05))
@@ -236,26 +243,35 @@ static func _paint_peach(ci: CanvasItem, r: float) -> void:
 
 # Pineapple: crosshatched body plus a spiky crown.
 static func _paint_pineapple(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[7]
+	var p: Dictionary = PALETTE[7]
 	var rx := 0.78 * r
 	var ry := 1.0 * r
 	ci.draw_colored_polygon(_ellipse_points(rx, ry, 40), p["base"])
-	ci.draw_colored_polygon(_scaled(_ellipse_points(rx, ry, 40), 0.8), Color(p["light"], 0.35))
-	var inside := func(pt: Vector2) -> bool: return (pt.x / rx) ** 2 + (pt.y / ry) ** 2 <= 0.97
+	ci.draw_colored_polygon(_scaled(_ellipse_points(rx, ry, 40), 0.8), Color(p["light"], 0.28))
+	var inside: Callable = func(pt: Vector2) -> bool: return (pt.x / rx) ** 2 + (pt.y / ry) ** 2 <= 0.97
 	for dir in [PI * 0.25, -PI * 0.25]:
 		for i in range(-8, 9):
 			var off := Vector2(-sin(dir), cos(dir)) * float(i) * 0.30 * r
-			var span := Vector2(cos(dir), sin(dir)) * 1.6 * r
-			_polyline_inside(ci, PackedVector2Array([off - span, off + span]), inside, Color(p["accent"], 0.75), max(1.0, r * 0.055))
-	ci.draw_polyline(_ellipse_points(rx, ry, 40) + PackedVector2Array([Vector2(rx, 0)]), p["dark"], max(1.2, r * 0.06), true)
-	for i in 7:
-		var a := -PI * 0.5 + (float(i) - 3.0) * 0.30
-		_leaf(ci, Vector2(0.0, -0.92 * r), a, 0.78 * r, 0.15 * r, p["leaf"], p["dark"])
+			var span := Vector2(cos(dir), sin(dir)) * 1.8 * r
+			# The span has to be densely sampled: _polyline_inside keeps only
+			# contiguous inside runs, and a bare 2-point segment has both
+			# endpoints outside the ellipse, so it would draw nothing.
+			var seg := PackedVector2Array()
+			for k in 25:
+				seg.append(off - span + span * 2.0 * (float(k) / 24.0))
+			_polyline_inside(ci, seg, inside, Color(p["accent"], 0.75), maxf(1.0, r * 0.055))
+	ci.draw_polyline(_ellipse_points(rx, ry, 40) + PackedVector2Array([Vector2(rx, 0)]), p["dark"], maxf(1.2, r * 0.06), true)
+	# Short, broad blades; a longer, narrower crown reads as agave rather than
+	# pineapple. Vein is a darkened green, not the body's dark yellow.
+	var vein: Color = Color(p["leaf"]).darkened(0.35)
+	for i in 5:
+		var a := -PI * 0.5 + (float(i) - 2.0) * 0.34
+		_leaf(ci, Vector2(0.0, -0.90 * r), a, 0.70 * r, 0.30 * r, p["leaf"], vein)
 
 
 # Melon: pale sphere with wide soft ribs and a stem scar.
 static func _paint_melon(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[8]
+	var p: Dictionary = PALETTE[8]
 	_sphere(ci, Vector2.ZERO, r, p["base"], p["light"], p["dark"])
 	for i in 7:
 		var u := -0.86 + float(i) * (1.72 / 6.0)
@@ -267,7 +283,7 @@ static func _paint_melon(ci: CanvasItem, r: float) -> void:
 
 # Watermelon: dark rind with wavy stripes.
 static func _paint_watermelon(ci: CanvasItem, r: float) -> void:
-	var p := PALETTE[9]
+	var p: Dictionary = PALETTE[9]
 	_sphere(ci, Vector2.ZERO, r, p["base"], p["light"], p["dark"])
 	for i in 7:
 		var u := -0.84 + float(i) * (1.68 / 6.0)
@@ -281,12 +297,39 @@ static func _paint_watermelon(ci: CanvasItem, r: float) -> void:
 
 ## A lit sphere: base disc, warm top-left bloom, cool bottom-right falloff,
 ## dark rim and a specular dot. Every fruit body is built from this.
+##
+## The bloom and falloff are offset discs that are deliberately larger than the
+## body, so they are clipped to it first — drawn raw they leave a hard crescent
+## hanging outside the silhouette.
 static func _sphere(ci: CanvasItem, c: Vector2, r: float, base: Color, light: Color, dark: Color) -> void:
 	ci.draw_circle(c, r, base)
-	ci.draw_circle(c + Vector2(-0.26 * r, -0.28 * r), r * 0.74, Color(light, 0.55))
-	ci.draw_circle(c + Vector2(0.28 * r, 0.32 * r), r * 0.80, Color(dark, 0.30))
-	ci.draw_arc(c, r * 0.97, 0.0, TAU, 44, dark, max(1.0, r * 0.07), true)
-	ci.draw_circle(c + Vector2(-0.34 * r, -0.40 * r), r * 0.19, Color(1, 1, 1, 0.50))
+	var inside: Callable = func(p: Vector2) -> bool: return (p - c).length_squared() <= r * r
+	var bloom := _clipped_disc(c + Vector2(-0.26 * r, -0.30 * r), r * 0.80, inside)
+	if bloom.size() > 2:
+		ci.draw_colored_polygon(bloom, Color(light, 0.50))
+	var falloff := _clipped_disc(c + Vector2(0.30 * r, 0.34 * r), r * 0.86, inside)
+	if falloff.size() > 2:
+		ci.draw_colored_polygon(falloff, Color(dark, 0.30))
+	ci.draw_arc(c, r * 0.97, 0.0, TAU, 44, dark, maxf(1.0, r * 0.07), true)
+	ci.draw_circle(c + Vector2(-0.34 * r, -0.40 * r), r * 0.17, Color(1, 1, 1, 0.45))
+
+
+## Circle of radius `r` at `c`, trimmed to the region accepted by `inside`.
+static func _clipped_disc(c: Vector2, r: float, inside: Callable, steps: int = 48) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var run := PackedVector2Array()
+	for i in range(steps + 1):
+		var a := TAU * float(i) / float(steps)
+		var p: Vector2 = c + Vector2(cos(a), sin(a)) * r
+		if inside.call(p):
+			run.append(p)
+		else:
+			if run.size() > 2:
+				out.append_array(run)
+			run = PackedVector2Array()
+	if run.size() > 2:
+		out.append_array(run)
+	return out
 
 
 static func _ellipse_points(rx: float, ry: float, steps: int) -> PackedVector2Array:
@@ -351,20 +394,26 @@ static func _leaf(ci: CanvasItem, base: Vector2, angle: float, length: float, wi
 
 
 static func _apple_outline(r: float) -> PackedVector2Array:
+	# Shallow dip at the top centre with rounded, near-level shoulders either
+	# side. Pushing the shoulder control points much higher than the dip turns
+	# the silhouette into a heart with an hourglass waist.
 	var pts := PackedVector2Array()
-	pts.append_array(_bezier(Vector2(0.0, -0.74 * r), Vector2(0.52 * r, -1.10 * r), Vector2(1.0, -0.34 * r), 14))
-	pts.append_array(_bezier(Vector2(1.0, -0.34 * r), Vector2(1.02 * r, 0.66 * r), Vector2(0.0, 1.02 * r), 16))
-	pts.append_array(_bezier(Vector2(0.0, 1.02 * r), Vector2(-1.02 * r, 0.66 * r), Vector2(-1.0, -0.34 * r), 16))
-	pts.append_array(_bezier(Vector2(-1.0, -0.34 * r), Vector2(-0.52 * r, -1.10 * r), Vector2(0.0, -0.74 * r), 14))
+	pts.append_array(_bezier(Vector2(0.0, -0.76 * r), Vector2(0.78 * r, -1.00 * r), Vector2(1.00 * r, -0.28 * r), 16))
+	pts.append_array(_bezier(Vector2(1.00 * r, -0.28 * r), Vector2(1.00 * r, 0.70 * r), Vector2(0.0, 1.02 * r), 18))
+	pts.append_array(_bezier(Vector2(0.0, 1.02 * r), Vector2(-1.00 * r, 0.70 * r), Vector2(-1.00 * r, -0.28 * r), 18))
+	pts.append_array(_bezier(Vector2(-1.00 * r, -0.28 * r), Vector2(-0.78 * r, -1.00 * r), Vector2(0.0, -0.76 * r), 16))
 	return pts
 
 
 static func _pear_outline(r: float) -> PackedVector2Array:
+	# Narrow neck, then a shoulder that flares out, then a round bulb. The bulb
+	# has to reach its widest point well below centre or the result reads as a
+	# cone with a flat base.
 	var pts := PackedVector2Array()
-	pts.append_array(_bezier(Vector2(0.0, -0.90 * r), Vector2(0.46 * r, -0.88 * r), Vector2(0.58 * r, -0.20 * r), 12))
-	pts.append_array(_bezier(Vector2(0.58 * r, -0.20 * r), Vector2(0.66 * r, 0.22 * r), Vector2(0.96 * r, 0.52 * r), 12))
-	pts.append_array(_bezier(Vector2(0.96 * r, 0.52 * r), Vector2(0.72 * r, 1.06 * r), Vector2(0.0, 1.04 * r), 14))
-	pts.append_array(_bezier(Vector2(0.0, 1.04 * r), Vector2(-0.72 * r, 1.06 * r), Vector2(-0.96 * r, 0.52 * r), 14))
-	pts.append_array(_bezier(Vector2(-0.96 * r, 0.52 * r), Vector2(-0.66 * r, 0.22 * r), Vector2(-0.58 * r, -0.20 * r), 12))
-	pts.append_array(_bezier(Vector2(-0.58 * r, -0.20 * r), Vector2(-0.46 * r, -0.88 * r), Vector2(0.0, -0.90 * r), 12))
+	pts.append_array(_bezier(Vector2(0.0, -0.92 * r), Vector2(0.24 * r, -0.96 * r), Vector2(0.42 * r, -0.54 * r), 14))
+	pts.append_array(_bezier(Vector2(0.42 * r, -0.54 * r), Vector2(0.80 * r, -0.28 * r), Vector2(0.90 * r, 0.24 * r), 14))
+	pts.append_array(_bezier(Vector2(0.90 * r, 0.24 * r), Vector2(0.94 * r, 0.80 * r), Vector2(0.0, 1.00 * r), 18))
+	pts.append_array(_bezier(Vector2(0.0, 1.00 * r), Vector2(-0.94 * r, 0.80 * r), Vector2(-0.90 * r, 0.24 * r), 18))
+	pts.append_array(_bezier(Vector2(-0.90 * r, 0.24 * r), Vector2(-0.80 * r, -0.28 * r), Vector2(-0.42 * r, -0.54 * r), 14))
+	pts.append_array(_bezier(Vector2(-0.42 * r, -0.54 * r), Vector2(-0.24 * r, -0.96 * r), Vector2(0.0, -0.92 * r), 14))
 	return pts

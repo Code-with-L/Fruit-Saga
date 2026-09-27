@@ -41,7 +41,7 @@ func _draw() -> void:
 		modulate = Color(1, 1, 1, 1)
 		draw_circle(Vector2.ZERO, radius, Color(color, alpha))
 	if guide_length > 0.0:
-		var y := half if half > 0.0 else radius
+		var y := radius + 6.0
 		var dash := 12.0
 		var gap := 10.0
 		var yy := y
