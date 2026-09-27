@@ -75,24 +75,21 @@ mouse_filter = 2
 script = ExtResource("2_next")
 max_display_radius = 44.0
 
-[node name="BottomBar" type="Control" parent="Root"]
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -60.0
-offset_right = 130.0
-grow_vertical = 0
-mouse_filter = 2
-
-[node name="MuteButton" type="Button" parent="Root/BottomBar"]
+[node name="SideBar" type="Control" parent="Root"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = 6.0
-offset_right = 116.0
-offset_bottom = 52.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_font_sizes/font_size = 16
+mouse_filter = 2
+
+[node name="MuteButton" type="Button" parent="Root/SideBar"]
+offset_left = 632.0
+offset_top = 130.0
+offset_right = 704.0
+offset_bottom = 178.0
+grow_horizontal = 1
+grow_vertical = 1
+theme_override_font_sizes/font_size = 14
 text = "SOUND"
 
 [node name="GameOverPanel" type="Control" parent="Root"]
