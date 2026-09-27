@@ -16,6 +16,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Fruit Saga"
 config/description="A Suika-style fruit merge game with combos, abilities and a daily challenge."
+config/version="0.1.0"
+config/icon="res://icon.png"
 run/main_scene="res://scenes/ui/TitleScreen.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
@@ -36,10 +38,6 @@ window/size/viewport_height=1280
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 window/handheld/orientation=1
-
-[dotnet]
-
-project/assembly_name="Fruit Saga"
 
 [layer_names]
 
