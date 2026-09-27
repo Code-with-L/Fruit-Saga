@@ -13,6 +13,8 @@ const GOLDEN_CHANCE := 0.025
 const BOMB_RADIUS := 260.0
 const BOMB_SCORE_MULT := 5
 const GOLDEN_SCORE_MULT := 20
+## Flat payout for merging two max-tier fruit, before any combo multiplier.
+const MAX_TIER_BONUS := 250
 
 var fruit_container: Node2D
 var _pending: Array[Array] = []
@@ -60,6 +62,17 @@ func _process_merge(a: Fruit, b: Fruit) -> void:
 	if tier_data == null:
 		return
 	var combo: int = GameManager.notify_merge()
+
+	if next_tier == -1:
+		# Max tier: there is nothing to promote to, so this is a payout rather
+		# than a merge. Both fruit are consumed, which stops same-cap fruit
+		# from sitting on the board forever, and the player gets the payoff
+		# they worked toward instead of silence.
+		_celebrate_max_tier(mid_pos, tier_data, combo)
+		FruitPool.release_fruit(a)
+		FruitPool.release_fruit(b)
+		return
+
 	var gained: int = GameManager.add_score(tier_data.score_value)
 
 	GameFX.burst(mid_pos, tier_data.color, 10 + mini(combo, 8) * 2, 260.0 + mini(combo, 8) * 30.0, 6.0)
@@ -82,6 +95,25 @@ func _process_merge(a: Fruit, b: Fruit) -> void:
 	fruit_container.add_child(new_fruit)
 	new_fruit.global_position = mid_pos
 	new_fruit.pop_in()
+
+
+## Two max-tier fruit touching: a flat bonus plus a noticeably bigger flourish
+## than a normal merge, and its own voice rather than the merge clip. Reuses
+## GameFX and Sfx exactly as _process_merge does, just scaled up.
+##
+## The bonus goes through GameManager.add_score, so like every other award it
+## picks up the live combo multiplier and the best-score bookkeeping.
+func _celebrate_max_tier(mid_pos: Vector2, tier_data: FruitTier, combo: int) -> void:
+	var bonus: int = GameManager.add_score(MAX_TIER_BONUS)
+	GameFX.burst(mid_pos, tier_data.color, 34, 620.0, 11.0)
+	GameFX.burst(mid_pos, Color(1.0, 0.94, 0.62), 22, 380.0, 7.0)
+	GameFX.shockwave(mid_pos, tier_data.radius * 4.4, Color(1.0, 0.88, 0.42), 12.0)
+	GameFX.shake(9.0, 0.5)
+	GameFX.popup(mid_pos, "+%d" % bonus, Color(1.0, 0.9, 0.4), 46)
+	GameFX.popup(mid_pos + Vector2(0, -56), "MAX!", Color(1.0, 0.95, 0.55), 40)
+	if combo >= 2:
+		GameFX.popup(mid_pos + Vector2(0, -100), "COMBO x%d" % combo, Color(1.0, 0.86, 0.35), 30)
+	Sfx.play("celebrate", -2.0)
 
 
 ## Cherry Bombs are deterministic (every N merges) so players can plan around

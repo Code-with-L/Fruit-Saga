@@ -270,6 +270,6 @@ func _on_body_entered(body: Node) -> void:
 		return
 	if other.tier_id != tier_id:
 		return
-	if FruitDatabase.get_next_tier(tier_id) == -1:
-		return  # already max tier
+	# Max-tier pairs are routed too: MergeManager pays them out instead of
+	# promoting them, so the board does not fill with inert watermelons.
 	MergeManager.request_merge(self, other)
