@@ -15,6 +15,10 @@ signal charges_changed(remaining: int, total: int)
 @export var color: Color = Color(0.32, 0.35, 0.42)
 @export var ready_color: Color = Color(0.42, 0.85, 0.55)
 
+## Minimum downward speed (px/s) for a fruit to count as falling *into* the
+## bin rather than rolling across it.
+const FALLING_MIN_VY := 26.0
+
 var charges: int = 3
 
 var _occupants: Dictionary = {}
@@ -49,6 +53,14 @@ func _process(_delta: float) -> void:
 			continue
 		var f := body as Fruit
 		if f.is_merging:
+			continue
+		# Only swallow fruit that is still *falling into* the mouth. A fruit
+		# rolling along the floor also ends up with its centre inside the bin,
+		# and without this gate it gets eaten without the player ever aiming
+		# there — the bin spans a fifth of the floor, so that used to happen
+		# constantly. A dropped fruit crosses the mouth in a few frames at
+		# several hundred px/s, well above the threshold.
+		if f.linear_velocity.y < FALLING_MIN_VY:
 			continue
 		if _inner.has_point(f.global_position - global_position):
 			doomed.append(f)

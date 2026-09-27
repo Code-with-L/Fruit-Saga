@@ -14,11 +14,17 @@ const BOMB_RADIUS := 260.0
 const BOMB_SCORE_MULT := 5
 const GOLDEN_SCORE_MULT := 20
 
-## Contact impulse above which a landing squashes the art, and above which it
-## also plays a thud. Tuned for ~0.9-4.9 kg fruit; retune after playtesting.
-const IMPACT_SQUASH := 2.0
-const IMPACT_SOUND := 7.0
-const IMPACT_SCALE := 400.0
+## Impact detection, in px/s of downward speed at the moment of contact.
+## Measured on this project (headless, 720x1280, gravity 980): a fruit dropped
+## from the aim line at y=90 to the floor at y=1240 lands at 1296-1344 px/s; a
+## fruit dropped 120px lands at 255-437; the floor of ~255 is one physics step
+## of fall, below which no contact is even registered. The brackets are scaled
+## to that measured range, so k reaches 1.0 on a full-height drop.
+const IMPACT_MIN_VY := 240.0
+const IMPACT_VY_SOUND := 520.0
+const IMPACT_VY_FULL := 1300.0
+const IMPACT_SQUASH_MIN := 0.10
+const IMPACT_SQUASH_MAX := 0.30
 const IMPACT_COOLDOWN := 0.14
 
 var tier_id: int = 0
@@ -31,6 +37,7 @@ var _collision_shape: CollisionShape2D
 var _tween: Tween
 var _pulse: float = 0.0
 var _impact_cd: float = 0.0
+var _fall_speed: float = 0.0
 var _dirty: bool = true
 
 
@@ -76,6 +83,8 @@ func setup(new_tier_id: int, new_special: int = Special.NONE) -> void:
 	spawn_time_msec = Time.get_ticks_msec()
 	squash = Vector2.ONE
 	_pulse = 0.0
+	_fall_speed = 0.0
+	_impact_cd = 0.0
 	_dirty = true
 	var data := FruitDatabase.get_tier(tier_id)
 	if data == null:
@@ -101,6 +110,11 @@ func reset_state() -> void:
 	special = Special.NONE
 	squash = Vector2.ONE
 	_pulse = 0.0
+	# Must be cleared: _integrate_forces ignores a merging fruit, so its
+	# accumulated fall speed would otherwise survive into the next reuse and
+	# fire a full-strength squash on a drop that never happened.
+	_fall_speed = 0.0
+	_impact_cd = 0.0
 	_dirty = true
 	sleeping = false
 
@@ -174,18 +188,27 @@ func _integrate_forces(state: PhysicsDirectBodyState2D) -> void:
 	if _impact_cd > 0.0:
 		_impact_cd = maxf(0.0, _impact_cd - state.step)
 		return
-	if is_merging:
+	if is_merging or state.get_contact_count() == 0:
 		return
-	var peak := 0.0
-	for i in state.get_contact_count():
-		peak = maxf(peak, state.get_contact_impulse(i).length())
-	if peak < IMPACT_SQUASH:
+	# `_integrate_forces` runs *after* the solver has resolved the contact, so
+	# linear_velocity is already ~0 here — reading it gives the post-impact
+	# speed, not the impact speed. _fall_speed is the peak downward speed
+	# accumulated over the fall by _physics_process on the previous step,
+	# which is the pre-contact velocity we actually want.
+	if _fall_speed < IMPACT_MIN_VY:
 		return
+	var speed := _fall_speed
+	_fall_speed = 0.0
 	_impact_cd = IMPACT_COOLDOWN
-	_squash(Vector2(1.0 + 0.18, 1.0 - 0.18), 0.26)
-	if peak >= IMPACT_SOUND:
-		var loud: float = clampf(peak / 40.0, 0.0, 1.0)
-		Sfx.play("drop", -20.0 + 10.0 * loud, randf_range(0.85, 1.15))
+	var k := clampf(speed / IMPACT_VY_FULL, 0.0, 1.0)
+	var squeeze := IMPACT_SQUASH_MIN + (IMPACT_SQUASH_MAX - IMPACT_SQUASH_MIN) * k
+	_squash(Vector2(1.0 + squeeze, 1.0 - squeeze), 0.26)
+	if speed >= IMPACT_VY_SOUND:
+		Sfx.play("drop", -21.0 + 11.0 * k, randf_range(0.85, 1.15))
+
+
+func _physics_process(_delta: float) -> void:
+	_fall_speed = maxf(_fall_speed, linear_velocity.y)
 
 
 # --- drawing ------------------------------------------------------------
