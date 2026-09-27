@@ -79,7 +79,7 @@ custom_minimum_size = Vector2(0, 22)
 [node name="HintLabel" type="Label" parent="Root/Center/VBox"]
 theme_override_colors/font_color = Color(0.48, 0.45, 0.53, 1)
 theme_override_font_sizes/font_size = 15
-text = "Drag to aim, release to drop · merge equals to grow\nA Cherry Bomb appears every 8 merges — tap it to blast\nChain merges inside a second for up to 5x · bin holds 3"
+text = "Drag to aim, release to drop · merge equals to grow\nA Cherry Bomb appears every 8 merges — tap it to blast\nChain merges inside a second for up to 5x\nTrash zone: 3 charges — fruit left resting there is destroyed"
 horizontal_alignment = 1
 
 [node name="BottomBar" type="Control" parent="Root"]
