@@ -86,6 +86,9 @@ func get_palette(tier_id: int) -> Dictionary:
 # --- baking -------------------------------------------------------------
 
 func _bake_all() -> void:
+	# TIMING (measurement only): total cost of baking every tier, which happens
+	# before the first frame of real UI.
+	var t0 := Time.get_ticks_msec()
 	_textures.clear()
 	_half_sizes.clear()
 	for tier in FruitDatabase.tiers:
@@ -93,6 +96,7 @@ func _bake_all() -> void:
 		var tex := await _bake(tier.tier_id, half)
 		_textures.append(tex)
 		_half_sizes.append(half)
+	print("TIMING fruitart_bake_ms=", Time.get_ticks_msec() - t0, " tiers=", _textures.size())
 
 
 func _bake(tier_id: int, half: float) -> Texture2D:
