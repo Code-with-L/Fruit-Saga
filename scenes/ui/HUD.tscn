@@ -1,0 +1,159 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/HUD.gd" id="1_hud"]
+[ext_resource type="Script" path="res://scripts/ui/NextFruitPreview.gd" id="2_next"]
+
+[node name="HUD" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_hud")
+
+[node name="Root" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TopBar" type="Control" parent="Root"]
+anchor_right = 1.0
+offset_bottom = 124.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="ScoreLabel" type="Label" parent="Root/TopBar"]
+offset_left = 16.0
+offset_top = 10.0
+offset_right = 320.0
+offset_bottom = 48.0
+theme_override_font_sizes/font_size = 28
+text = "Score: 0"
+
+[node name="BestLabel" type="Label" parent="Root/TopBar"]
+offset_left = 16.0
+offset_top = 50.0
+offset_right = 196.0
+offset_bottom = 80.0
+theme_override_font_sizes/font_size = 20
+text = "Best: 0"
+
+[node name="ComboLabel" type="Label" parent="Root/TopBar"]
+visible = false
+offset_left = 200.0
+offset_top = 50.0
+offset_right = 540.0
+offset_bottom = 96.0
+pivot_offset = Vector2(170, 23)
+theme_override_font_sizes/font_size = 30
+text = "COMBO x2  1.5x"
+horizontal_alignment = 1
+
+[node name="ModeLabel" type="Label" parent="Root/TopBar"]
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 340.0
+offset_bottom = 112.0
+theme_override_colors/font_color = Color(0.42, 0.4, 0.47, 1)
+theme_override_font_sizes/font_size = 16
+text = "FREE PLAY"
+
+[node name="NextPreviewBox" type="Control" parent="Root/TopBar"]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -116.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = 112.0
+grow_horizontal = 0
+mouse_filter = 2
+
+[node name="NextFruitPreview" type="Control" parent="Root/TopBar/NextPreviewBox"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_next")
+max_display_radius = 44.0
+
+[node name="BottomBar" type="Control" parent="Root"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_right = 130.0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="MuteButton" type="Button" parent="Root/BottomBar"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 6.0
+offset_right = 116.0
+offset_bottom = 52.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 16
+text = "SOUND"
+
+[node name="GameOverPanel" type="Control" parent="Root"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="Root/GameOverPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="Root/GameOverPanel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="Panel" parent="Root/GameOverPanel/CenterContainer"]
+custom_minimum_size = Vector2(420, 360)
+
+[node name="VBox" type="VBoxContainer" parent="Root/GameOverPanel/CenterContainer/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Root/GameOverPanel/CenterContainer/Panel/VBox"]
+theme_override_font_sizes/font_size = 40
+text = "Game Over"
+horizontal_alignment = 1
+
+[node name="FinalScoreLabel" type="Label" parent="Root/GameOverPanel/CenterContainer/Panel/VBox"]
+theme_override_font_sizes/font_size = 30
+text = "Score: 0"
+horizontal_alignment = 1
+
+[node name="BestFinalLabel" type="Label" parent="Root/GameOverPanel/CenterContainer/Panel/VBox"]
+theme_override_colors/font_color = Color(0.45, 0.43, 0.5, 1)
+theme_override_font_sizes/font_size = 18
+text = "Best: 0"
+horizontal_alignment = 1
+
+[node name="RestartButton" type="Button" parent="Root/GameOverPanel/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 58)
+theme_override_font_sizes/font_size = 24
+text = "Play Again"
+
+[node name="MenuButton" type="Button" parent="Root/GameOverPanel/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 44)
+theme_override_font_sizes/font_size = 18
+text = "Main Menu"

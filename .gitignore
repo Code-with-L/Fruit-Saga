@@ -1,0 +1,22 @@
+# Godot 4 editor cache and imported resources
+.godot/
+.import/
+
+# Android build template (generated, very large)
+/android/
+
+# Export presets can embed local keystore paths and passwords
+export_presets.cfg
+
+# Export output
+build/
+*.apk
+*.aab
+*.idsig
+
+# Translation imports
+*.translation
+
+# OS cruft
+.DS_Store
+Thumbs.db

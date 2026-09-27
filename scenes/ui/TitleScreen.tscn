@@ -1,0 +1,103 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/TitleScreen.gd" id="1_title"]
+
+[node name="TitleScreen" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_title")
+
+[node name="Root" type="Control" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Center" type="CenterContainer" parent="Root"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="Root/Center"]
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Root/Center/VBox"]
+theme_override_font_sizes/font_size = 62
+text = "FRUIT SAGA"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="Root/Center/VBox"]
+theme_override_colors/font_color = Color(0.45, 0.42, 0.5, 1)
+theme_override_font_sizes/font_size = 18
+text = "merge  ·  chain  ·  survive"
+horizontal_alignment = 1
+
+[node name="Gap1" type="Control" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(0, 26)
+
+[node name="FreeButton" type="Button" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(400, 66)
+theme_override_font_sizes/font_size = 26
+text = "FREE PLAY"
+
+[node name="FreeBestLabel" type="Label" parent="Root/Center/VBox"]
+theme_override_colors/font_color = Color(0.45, 0.42, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "Best: 0"
+horizontal_alignment = 1
+
+[node name="Gap2" type="Control" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(0, 12)
+
+[node name="DailyButton" type="Button" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(400, 66)
+theme_override_font_sizes/font_size = 26
+text = "DAILY CHALLENGE"
+
+[node name="DailyDateLabel" type="Label" parent="Root/Center/VBox"]
+theme_override_colors/font_color = Color(0.45, 0.42, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "Challenge for today"
+horizontal_alignment = 1
+
+[node name="DailyBestLabel" type="Label" parent="Root/Center/VBox"]
+theme_override_colors/font_color = Color(0.45, 0.42, 0.5, 1)
+theme_override_font_sizes/font_size = 16
+text = "Best today: 0"
+horizontal_alignment = 1
+
+[node name="Gap3" type="Control" parent="Root/Center/VBox"]
+custom_minimum_size = Vector2(0, 22)
+
+[node name="HintLabel" type="Label" parent="Root/Center/VBox"]
+theme_override_colors/font_color = Color(0.48, 0.45, 0.53, 1)
+theme_override_font_sizes/font_size = 15
+text = "Drag to aim, release to drop · merge equals to grow\nA Cherry Bomb appears every 8 merges — tap it to blast\nChain merges inside a second for up to 5x · bin holds 3"
+horizontal_alignment = 1
+
+[node name="BottomBar" type="Control" parent="Root"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_right = 130.0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="MuteButton" type="Button" parent="Root/BottomBar"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 6.0
+offset_right = 116.0
+offset_bottom = 52.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 16
+text = "SOUND"
