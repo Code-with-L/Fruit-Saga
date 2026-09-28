@@ -5,8 +5,12 @@
 # Android build template (generated, very large)
 /android/
 
-# Export presets can embed local keystore paths and passwords
-export_presets.cfg
+# Signing material and export credentials must never be committed.
+# export_presets.cfg itself IS committed: it contains no keystore path or
+# password, since debug builds pull the keystore from the editor's own
+# settings (Editor Settings > Export > Android > Debug Keystore).
+*.keystore
+export_credentials.cfg
 
 # Export output
 build/
