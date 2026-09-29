@@ -17,8 +17,6 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	# TIMING (measurement only): cost of synthesising every sound at boot.
-	var t0 := Time.get_ticks_msec()
 	_rng.seed = 0x5EED
 	_sounds["pop"] = _synth(560.0, 190.0, 0.16, 0.18, 3.2)
 	_sounds["merge"] = _synth(700.0, 240.0, 0.22, 0.14, 2.6)
@@ -35,7 +33,6 @@ func _ready() -> void:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_players.append(p)
-	print("TIMING sfx_synth_ms=", Time.get_ticks_msec() - t0, " sounds=", _sounds.size())
 
 
 func play(id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:

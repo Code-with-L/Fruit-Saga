@@ -14,7 +14,6 @@ const MAIN_SCENE := "res://scenes/Main.tscn"
 const SHOWCASE_TIERS := [0, 2, 4, 6, 9]
 
 var _t: float = 0.0
-var _logged_first_draw: bool = false
 
 
 func _ready() -> void:
@@ -59,11 +58,6 @@ func _refresh_bests() -> void:
 
 
 func _draw() -> void:
-	# TIMING (measurement only): ms from engine start to the first real frame of
-	# the title screen, which is what the player actually waits through.
-	if not _logged_first_draw:
-		_logged_first_draw = true
-		print("TIMING title_first_draw_ms=", Time.get_ticks_msec())
 	_draw_backdrop()
 	_draw_showcase()
 
